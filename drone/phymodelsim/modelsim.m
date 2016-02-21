@@ -2,14 +2,14 @@ clear;
 %% Simulation set up
 % Simulation time, in seconds
 start_time = 0;
-end_t = 1;
-d_t = 0.02;
+end_t = 5;
+d_t = 0.05;
 f_scale = 0.05; 	% force scale for displaying
-disp_speed = 0.5;
+disp_speed = 1;
 
 % Controller gains, tuned by hand
-Kd = 0.4;
-Kp = 0.3;
+Kd = 0;
+Kp = 5;
 
 
 % Initial body state
@@ -24,14 +24,17 @@ g = 10;
 b = 0.05;
 k = 1;
 kd = 0.1;
-I_xx = 1; % Inertia
-I_yy = 1;
-I_zz = 2;
+I_xx = 0.2; % Inertia
+I_yy = 0.2;
+I_zz = 0.4;
 
 
 % Simulate disturbulance in angular velocity, deviation in radians/second
 deviation = 100;
-d_theta = deg2rad(2*deviation*rand(3,1) - deviation);
+d_theta = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation);
+
+disp('Initial diviation in angular velocity, in radians/second:');
+disp(d_theta);
 
 
 %% Simulating
@@ -81,6 +84,8 @@ F2x_data = zeros(3, N_time);
 F3x_data = zeros(3, N_time);
 F4x_data = zeros(3, N_time);
 
+Theta_data = zeros(3, N_time);
+
 
 for tc = 1:N_time 	% time count
 	
@@ -125,9 +130,11 @@ for tc = 1:N_time 	% time count
 	F3x_data(:,tc) = f3x;
 	F4x_data(:,tc) = f4x;
 
+	Theta_data(:,tc) = theta;
+
 end
 
-%% Displaying
+%% Displaying dynamics
 d_t_plot = d_t/disp_speed;
 t_int = d_t_plot/100; % time interval to check timer, in seconds
 
@@ -136,6 +143,8 @@ axlim = max(max(abs(X_data))) + 2*L;
 ax_limit = [-axlim axlim -axlim axlim -axlim axlim];
 
 disp('Start displaying');
+figure('Position', [400 100 800 800])
+
 for tc = 1:N_time
 	tic;
 
@@ -149,7 +158,6 @@ for tc = 1:N_time
 	f3x_plot = F3x_data(:,tc);
 	f4x_plot = F4x_data(:,tc);
 
-	figure(1);
 	% plot drone center
 	%plot3(x_plot(1),x_plot(2),x_plot(3),'or','LineWidth',4);
 	% plot drone body
@@ -185,6 +193,12 @@ for tc = 1:N_time
 end
 
 
+%% Plot dynamics change
 
+figure(2);
+plot(time_seq, rad2deg(Theta_data));
+title('Angle vs time');
+legend('\phi ~ x', '\theta ~ y', '\gamma ~ z');
+xlabel('time (s)'); ylabel('angle (^{o})');
 
 
