@@ -68,13 +68,13 @@ for tc = 1:N_time 	% time count
 
 	% Compute linear and angular accelerations.
 	a = acceleration(i, theta, d_x, m, g, k, kd);
-	d_omega = angular_accelaration(i, omega, I, L, b, k);
+	d_omega = angular_acceleration(i, omega, I, L, b, k);
 
 	omega = omega + d_time*d_omega;
 	d_theta = omega2d_theta(omega, theta);
 	theta = theta + d_time*d_theta;
 	d_x = d_x + d_time*a;
-	x = x + d_time*d_x; 		% drone center coordinates in inertial frame
+	x = x + d_time*d_x; 	% drone center coordinates in inertial frame
 
 	% Compute and save data
 	R = rotation(theta);
