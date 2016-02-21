@@ -1,5 +1,5 @@
 % Function: return thrust
-% input: current inputs, thrust coefficient
-function result = thrust(inputs, k)
-	result = [0; 0; k*sum(inputs)];
+% input: r (motor angular velocity square), thrust coefficient
+function result = thrust(r, k)
+	result = [0; 0; k*sum(r)];
 end

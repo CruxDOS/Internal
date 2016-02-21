@@ -2,9 +2,15 @@ clear;
 %% Simulation set up
 % Simulation time, in seconds
 start_time = 0;
-end_time = 1;
-d_time = 0.05;
+end_t = 1;
+d_t = 0.02;
 f_scale = 0.05; 	% force scale for displaying
+disp_speed = 0.5;
+
+% Controller gains, tuned by hand
+Kd = 0.4;
+Kp = 0.3;
+
 
 % Initial body state
 x = [0; 0; 0];
@@ -24,18 +30,35 @@ I_zz = 2;
 
 
 % Simulate disturbulance in angular velocity, deviation in radians/second
-deviation = 10;
+deviation = 100;
 d_theta = deg2rad(2*deviation*rand(3,1) - deviation);
 
 
 %% Simulating
-time_seq = start_time:d_time:end_time;
+time_seq = start_time:d_t:end_t;
 N_time = numel(time_seq);
 
 % Inertia matrix
 I = [	I_xx	0	0	;
 	0	I_yy	0	;
 	0	0	I_zz	];
+integral = 0;
+params = struct( 	...
+	'd_t', 	{d_t},	...
+	'm', 	{m},    ...
+	'g', 	{g},    ...
+	'k', 	{k},    ...
+	'L', 	{L},    ...
+	'b', 	{b},    ...
+	'I_xx',	{I_xx}, ...
+	'I_yy',	{I_yy}, ...
+	'I_zz',	{I_zz}  ...
+	);
+
+PD_param = struct(	...
+	'Kd',	{Kd},	...
+	'Kp',	{Kp}	...
+	);
 
 % m position in body frame
 m1ang = 0;	% angular position of four ms, in radians
@@ -62,19 +85,20 @@ F4x_data = zeros(3, N_time);
 for tc = 1:N_time 	% time count
 	
 	t = time_seq(tc);
-	i = 1.1* m*g/4*ones(4,1); %input(t);
+	% r = 1.1* m*g/4*ones(4,1); %input(t);
+	[r, integral] = pd_controller(integral, params, d_theta, PD_param); % r: motor anglar velocity square
 
 	omega = d_theta2omega(d_theta, theta);
 
 	% Compute linear and angular accelerations.
-	a = acceleration(i, theta, d_x, m, g, k, kd);
-	d_omega = angular_acceleration(i, omega, I, L, b, k);
+	a = acceleration(r, theta, d_x, m, g, k, kd);
+	d_omega = angular_acceleration(r, omega, I, L, b, k);
 
-	omega = omega + d_time*d_omega;
+	omega = omega + d_t*d_omega;
 	d_theta = omega2d_theta(omega, theta);
-	theta = theta + d_time*d_theta;
-	d_x = d_x + d_time*a;
-	x = x + d_time*d_x; 	% drone center coordinates in inertial frame
+	theta = theta + d_t*d_theta;
+	d_x = d_x + d_t*a;
+	x = x + d_t*d_x; 	% drone center coordinates in inertial frame
 
 	% Compute and save data
 	R = rotation(theta);
@@ -82,10 +106,10 @@ for tc = 1:N_time 	% time count
 	m2x = R*m2pos + x;
 	m3x = R*m3pos + x;
 	m4x = R*m4pos + x;
-	f1v = f_scale*[0; 0; i(1)];	% f vectors in body frame
-	f2v = f_scale*[0; 0; i(2)];
-	f3v = f_scale*[0; 0; i(3)];
-	f4v = f_scale*[0; 0; i(4)];
+	f1v = f_scale*[0; 0; r(1)];	% f vectors in body frame
+	f2v = f_scale*[0; 0; r(2)];
+	f3v = f_scale*[0; 0; r(3)];
+	f4v = f_scale*[0; 0; r(4)];
 	f1x = R*f1v + m1x; 	% f coordinates in inertial frame
 	f2x = R*f2v + m2x;
 	f3x = R*f3v + m3x;
@@ -104,12 +128,11 @@ for tc = 1:N_time 	% time count
 end
 
 %% Displaying
-display_speed = 0.1;
-d_time_plot = d_time/display_speed;
-time_int = d_time_plot/100; % time interval to check timer, in seconds
+d_t_plot = d_t/disp_speed;
+t_int = d_t_plot/100; % time interval to check timer, in seconds
 
 % calculate limit of coordinates
-axlim = max(max(abs(X_data)));
+axlim = max(max(abs(X_data))) + 2*L;
 ax_limit = [-axlim axlim -axlim axlim -axlim axlim];
 
 disp('Start displaying');
@@ -151,12 +174,12 @@ for tc = 1:N_time
 	grid on;
 	axis(ax_limit);
 
-	if toc > d_time_plot
+	if toc > d_t_plot
 		disp('Warning: Plotting time longer than real time');
 	end
 
-	while(toc < d_time_plot)
-		pause(time_int);
+	while(toc < d_t_plot)
+		pause(t_int);
 	end
     
 end
