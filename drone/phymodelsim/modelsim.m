@@ -2,13 +2,13 @@ clear;
 %% Simulation set up
 % Simulation time, in seconds
 start_time = 0;
-end_t = 5;
+end_t = 10;
 d_t = 0.05;
 f_scale = 0.05; 	% force scale for displaying
 disp_speed = 1;
 
 % Controller gains, tuned by hand
-Kd = 0;
+Kd = 2;
 Kp = 5;
 
 
@@ -30,11 +30,8 @@ I_zz = 0.4;
 
 
 % Simulate disturbulance in angular velocity, deviation in radians/second
-deviation = 100;
-d_theta = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation);
+deviation = 50;
 
-disp('Initial diviation in angular velocity, in radians/second:');
-disp(d_theta);
 
 
 %% Simulating
@@ -45,7 +42,10 @@ N_time = numel(time_seq);
 I = [	I_xx	0	0	;
 	0	I_yy	0	;
 	0	0	I_zz	];
-integral = 0;
+state = struct(				...
+	'theta',	{0},		...
+	'prev_d_theta',	{0}	...
+	);
 params = struct( 	...
 	'd_t', 	{d_t},	...
 	'm', 	{m},    ...
@@ -89,18 +89,23 @@ Theta_data = zeros(3, N_time);
 
 for tc = 1:N_time 	% time count
 	
-	t = time_seq(tc);
-	% r = 1.1* m*g/4*ones(4,1); %input(t);
-	[r, integral] = pd_controller(integral, params, d_theta, PD_param); % r: motor anglar velocity square
-
-	omega = d_theta2omega(d_theta, theta);
-
 	% Compute linear and angular accelerations.
+	if tc == 1
+		d_theta = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation); % apply disturbance at beginning
+		state.prev_d_theta = d_theta; % assuming previous d_theta has the same value
+	else
+		d_theta = omega2d_theta(omega, theta);
+	end
+
+	% Controller
+	[r, state] = pd_controller(state, params, d_theta, PD_param); % r: motor anglar velocity square
+
+	% Compute linear and angular acceleration
+	omega = d_theta2omega(d_theta, theta);
 	a = acceleration(r, theta, d_x, m, g, k, kd);
 	d_omega = angular_acceleration(r, omega, I, L, b, k);
-
+	% Data for next time slot
 	omega = omega + d_t*d_omega;
-	d_theta = omega2d_theta(omega, theta);
 	theta = theta + d_t*d_theta;
 	d_x = d_x + d_t*a;
 	x = x + d_t*d_x; 	% drone center coordinates in inertial frame
@@ -142,6 +147,11 @@ t_int = d_t_plot/100; % time interval to check timer, in seconds
 axlim = max(max(abs(X_data))) + 2*L;
 ax_limit = [-axlim axlim -axlim axlim -axlim axlim];
 
+disp('Initial diviation in angular velocity, in radians/second:');
+disp('x:' + d_theta(1));
+disp('y:' + d_theta(2));
+disp('z:' + d_theta(3));
+disp('\n');
 disp('Start displaying');
 figure('Position', [400 100 800 800])
 

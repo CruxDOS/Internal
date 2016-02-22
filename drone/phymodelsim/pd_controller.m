@@ -1,6 +1,8 @@
 % Compute controller output and updated state.
-function [r, integral] = pd_controller(integral, params, d_theta, PD_param)
+function [r, state] = pd_controller(state, params, d_theta, PD_param)
 	
+	theta = state.theta;
+	prev_d_theta = state.prev_d_theta;
 	d_t = params.d_t;
 	m = params.m;
 	g = params.g;
@@ -15,13 +17,13 @@ function [r, integral] = pd_controller(integral, params, d_theta, PD_param)
 	Kp = PD_param.Kp;
 	
 	% Update the state
-	integral = integral + d_t .* d_theta;
+	theta = theta + d_t .* (prev_d_theta + d_theta)/2;
 
 	% Compute total thrust
-	thrust_ave = m*g/(4*k*(cos(integral(1))*cos(integral(2))));
+	thrust_ave = m*g/(4*k*(cos(theta(1))*cos(theta(2))));
 
 	% Compute errors
-	e = Kd*d_theta + Kp*integral;
+	e = Kd*d_theta + Kp*theta;
 
 	% Solve for the outputs
 	r1 = thrust_ave + (- 2*b*e(1)*I_xx - e(3)*I_zz*k*L)/(4*b*k*L);
@@ -39,4 +41,7 @@ function [r, integral] = pd_controller(integral, params, d_theta, PD_param)
 		end
 	end
 	r = r_int;
+
+	state.prev_d_theta = d_theta;
+	state.theta = theta;
 end
