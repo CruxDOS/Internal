@@ -30,9 +30,9 @@ I_zz = 0.4;
 
 
 % Simulate disturbulance in angular velocity, deviation in radians/second
-deviation = 50;
-
-
+deviation = 20;
+d_theta_init = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation); % apply disturbance at beginning
+state.prev_d_theta = d_theta_init; % assuming previous d_theta has the same value
 
 %% Simulating
 time_seq = start_time:d_t:end_t;
@@ -89,12 +89,9 @@ Theta_data = zeros(3, N_time);
 
 for tc = 1:N_time 	% time count
 	
-	% Compute linear and angular accelerations.
+	% Apply initial angular velocity at the begining
 	if tc == 1
-		d_theta = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation); % apply disturbance at beginning
-		state.prev_d_theta = d_theta; % assuming previous d_theta has the same value
-	else
-		d_theta = omega2d_theta(omega, theta);
+		d_theta = d_theta_init; 
 	end
 
 	% Controller
@@ -109,6 +106,7 @@ for tc = 1:N_time 	% time count
 	theta = theta + d_t*d_theta;
 	d_x = d_x + d_t*a;
 	x = x + d_t*d_x; 	% drone center coordinates in inertial frame
+	d_theta = omega2d_theta(omega, theta);
 
 	% Compute and save data
 	R = rotation(theta);
@@ -147,13 +145,24 @@ t_int = d_t_plot/100; % time interval to check timer, in seconds
 axlim = max(max(abs(X_data))) + 2*L;
 ax_limit = [-axlim axlim -axlim axlim -axlim axlim];
 
-disp('Initial diviation in angular velocity, in radians/second:');
-disp('x:' + d_theta(1));
-disp('y:' + d_theta(2));
-disp('z:' + d_theta(3));
-disp('\n');
+disp('Initial diviation in angular velocity, in degrees/second:');
+disp(['x: ', num2str(rad2deg(d_theta_init(1)))]);
+disp(['y: ', num2str(rad2deg(d_theta_init(2)))]);
+disp(['z: ', num2str(rad2deg(d_theta_init(3)))]);
+disp('');
 disp('Start displaying');
 figure('Position', [400 100 800 800])
+h = zeros(12,1);
+% plot contrast lines
+plot3([ 0         ;  0         ], [-axlim     ;  axlim     ], [-axlim     ; -axlim     ], '-k', 'LineWidth', 0.5);
+hold on;
+grid on;
+axis(ax_limit);
+plot3([-axlim     ;  axlim     ], [ 0         ;  0         ], [-axlim     ; -axlim     ], '-k', 'LineWidth', 0.5);
+plot3([ 0         ;  0         ], [ axlim     ;  axlim     ], [-axlim     ;  axlim     ], '-k', 'LineWidth', 0.5);
+plot3([-axlim     ;  axlim     ], [ axlim     ;  axlim     ], [ 0         ;  0         ], '-k', 'LineWidth', 0.5);
+plot3([ axlim     ;  axlim     ], [ 0         ;  0         ], [-axlim     ;  axlim     ], '-k', 'LineWidth', 0.5);
+plot3([ axlim     ;  axlim     ], [-axlim     ;  axlim     ], [ 0         ;  0         ], '-k', 'LineWidth', 0.5);
 
 for tc = 1:N_time
 	tic;
@@ -167,30 +176,31 @@ for tc = 1:N_time
 	f2x_plot = F2x_data(:,tc);
 	f3x_plot = F3x_data(:,tc);
 	f4x_plot = F4x_data(:,tc);
+	
+	handle = findall (gca, 'LineWidth', 2);
+	delete(handle);
+
+	% plot projections
+	plot3([m1x_plot(1); m3x_plot(1)], [m1x_plot(2); m3x_plot(2)], [-axlim     ; -axlim     ], '-k', 'LineWidth', 2);
+	plot3([m2x_plot(1); m4x_plot(1)], [m2x_plot(2); m4x_plot(2)], [-axlim     ; -axlim     ], '-k', 'LineWidth', 2);
+	plot3([m1x_plot(1); m3x_plot(1)], [axlim      ; axlim      ], [m1x_plot(3); m3x_plot(3)], '-k', 'LineWidth', 2);
+	plot3([m2x_plot(1); m4x_plot(1)], [axlim      ; axlim      ], [m2x_plot(3); m4x_plot(3)], '-k', 'LineWidth', 2);
+	plot3([axlim      ; axlim      ], [m1x_plot(2); m3x_plot(2)], [m1x_plot(3); m3x_plot(3)], '-k', 'LineWidth', 2);
+	plot3([axlim      ; axlim      ], [m2x_plot(2); m4x_plot(2)], [m2x_plot(3); m4x_plot(3)], '-k', 'LineWidth', 2);
+
+	% plot drone body
+	plot3([m1x_plot(1); m3x_plot(1)], [m1x_plot(2); m3x_plot(2)], [m1x_plot(3); m3x_plot(3)], '-b', 'LineWidth', 2);
+	plot3([m2x_plot(1); m4x_plot(1)], [m2x_plot(2); m4x_plot(2)], [m2x_plot(3); m4x_plot(3)], '-b', 'LineWidth', 2);
+
+	% plot motor forces 
+	plot3([m1x_plot(1); f1x_plot(1)], [m1x_plot(2); f1x_plot(2)], [m1x_plot(3); f1x_plot(3)], '-g', 'LineWidth', 2);
+	plot3([m2x_plot(1); f2x_plot(1)], [m2x_plot(2); f2x_plot(2)], [m2x_plot(3); f2x_plot(3)], '-g', 'LineWidth', 2);
+	plot3([m3x_plot(1); f3x_plot(1)], [m3x_plot(2); f3x_plot(2)], [m3x_plot(3); f3x_plot(3)], '-g', 'LineWidth', 2);
+	plot3([m4x_plot(1); f4x_plot(1)], [m4x_plot(2); f4x_plot(2)], [m4x_plot(3); f4x_plot(3)], '-g', 'LineWidth', 2);
 
 	% plot drone center
 	%plot3(x_plot(1),x_plot(2),x_plot(3),'or','LineWidth',4);
-	% plot drone body
-	plot3([m1x_plot(1);m3x_plot(1)], [m1x_plot(2);m3x_plot(2)], [m1x_plot(3);m3x_plot(3)], '-b', 'LineWidth', 2);
-	hold on;
-	plot3([m2x_plot(1);m4x_plot(1)], [m2x_plot(2);m4x_plot(2)], [m2x_plot(3);m4x_plot(3)], '-b', 'LineWidth', 2);
-	% plot motor forces
-	plot3([m1x_plot(1);f1x_plot(1)], [m1x_plot(2);f1x_plot(2)], [m1x_plot(3);f1x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m2x_plot(1);f2x_plot(1)], [m2x_plot(2);f2x_plot(2)], [m2x_plot(3);f2x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m3x_plot(1);f3x_plot(1)], [m3x_plot(2);f3x_plot(2)], [m3x_plot(3);f3x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m4x_plot(1);f4x_plot(1)], [m4x_plot(2);f4x_plot(2)], [m4x_plot(3);f4x_plot(3)], '-g', 'LineWidth', 2);
-	
-	% plot projections
-	plot3([m1x_plot(1);m3x_plot(1)], [m1x_plot(2);m3x_plot(2)], [-axlim; -axlim], '-k', 'LineWidth', 2);
-	plot3([m2x_plot(1);m4x_plot(1)], [m2x_plot(2);m4x_plot(2)], [-axlim; -axlim], '-k', 'LineWidth', 2);
-	plot3([m1x_plot(1);m3x_plot(1)], [axlim; axlim], [m1x_plot(3);m3x_plot(3)], '-k', 'LineWidth', 2);
-	plot3([m2x_plot(1);m4x_plot(1)], [axlim; axlim], [m2x_plot(3);m4x_plot(3)], '-k', 'LineWidth', 2);
-	plot3([axlim; axlim], [m1x_plot(2);m3x_plot(2)], [m1x_plot(3);m3x_plot(3)], '-k', 'LineWidth', 2);
-	plot3([axlim; axlim], [m2x_plot(2);m4x_plot(2)], [m2x_plot(3);m4x_plot(3)], '-k', 'LineWidth', 2);
 
-	hold off;
-	grid on;
-	axis(ax_limit);
 
 	if toc > d_t_plot
 		disp('Warning: Plotting time longer than real time');
@@ -201,6 +211,8 @@ for tc = 1:N_time
 	end
     
 end
+hold off;
+xlabel('X'); ylabel('Y'); zlabel('Z');
 
 
 %% Plot dynamics change
@@ -208,7 +220,7 @@ end
 figure(2);
 plot(time_seq, rad2deg(Theta_data));
 title('Angle vs time');
-legend('\phi ~ x', '\theta ~ y', '\gamma ~ z');
+legend('\alpha ~ x', '\beta ~ y', '\gamma ~ z');
 xlabel('time (s)'); ylabel('angle (^{o})');
 
 
