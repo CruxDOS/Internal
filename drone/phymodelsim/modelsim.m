@@ -23,7 +23,7 @@ L = 0.13;
 g = 10;
 b = 0.05;
 k = 1;
-kd = 0.1;
+kd = 1;
 I_xx = 0.2; % Inertia
 I_yy = 0.2;
 I_zz = 0.4;
@@ -31,7 +31,7 @@ I_zz = 0.4;
 
 % Simulate disturbulance in angular velocity, deviation in radians/second
 deviation = 20;
-d_theta_init = deg2rad(2*deviation*[rand(2,1); 0.5] - deviation); % apply disturbance at beginning
+d_theta_init = deg2rad(2*deviation*rand(3,1) - deviation); % apply disturbance at beginning
 state.prev_d_theta = d_theta_init; % assuming previous d_theta has the same value
 
 %% Simulating
@@ -83,6 +83,7 @@ F1x_data = zeros(3, N_time);
 F2x_data = zeros(3, N_time);
 F3x_data = zeros(3, N_time);
 F4x_data = zeros(3, N_time);
+Fav_data = zeros(3, N_time);
 
 Theta_data = zeros(3, N_time);
 
@@ -114,27 +115,35 @@ for tc = 1:N_time 	% time count
 	m2x = R*m2pos + x;
 	m3x = R*m3pos + x;
 	m4x = R*m4pos + x;
-	f1v = f_scale*[0; 0; r(1)];	% f vectors in body frame
-	f2v = f_scale*[0; 0; r(2)];
-	f3v = f_scale*[0; 0; r(3)];
-	f4v = f_scale*[0; 0; r(4)];
-	f1x = R*f1v + m1x; 	% f coordinates in inertial frame
-	f2x = R*f2v + m2x;
-	f3x = R*f3v + m3x;
-	f4x = R*f4v + m4x;
+	f1v = R*f_scale*[0; 0; r(1)];	% f vectors in body frame
+	f2v = R*f_scale*[0; 0; r(2)];
+	f3v = R*f_scale*[0; 0; r(3)];
+	f4v = R*f_scale*[0; 0; r(4)];
+	f1x = f1v + m1x; 	% f coordinates in inertial frame
+	f2x = f2v + m2x;
+	f3x = f3v + m3x;
+	f4x = f4v + m4x;
+	fav = (f1v + f2v + f3v + f4v)/4; % average f vector
+	fa1x = fav + m1x; 	% f coordinates in inertial frame
+	fa2x = fav + m2x;
+	fa3x = fav + m3x;
+	fa4x = fav + m4x;
 
 	X_data(:,tc) = x; 	% save drone center x data
 	M1x_data(:,tc) = m1x; 	% save motor x data
 	M2x_data(:,tc) = m2x;
 	M3x_data(:,tc) = m3x;
 	M4x_data(:,tc) = m4x;
-	F1x_data(:,tc) = f1x; 	% save force x data
+	F1x_data(:,tc) = f1x; 	% save f x data
 	F2x_data(:,tc) = f2x;
 	F3x_data(:,tc) = f3x;
 	F4x_data(:,tc) = f4x;
+	Fa1x_data(:,tc) = fa1x; % save average f x data
+	Fa2x_data(:,tc) = fa2x;
+	Fa3x_data(:,tc) = fa3x;
+	Fa4x_data(:,tc) = fa4x;
 
 	Theta_data(:,tc) = theta;
-
 end
 
 %% Displaying dynamics
@@ -176,9 +185,16 @@ for tc = 1:N_time
 	f2x_plot = F2x_data(:,tc);
 	f3x_plot = F3x_data(:,tc);
 	f4x_plot = F4x_data(:,tc);
+	fa1x_plot = Fa1x_data(:,tc);
+	fa2x_plot = Fa2x_data(:,tc);
+	fa3x_plot = Fa3x_data(:,tc);
+	fa4x_plot = Fa4x_data(:,tc);
 	
-	handle = findall (gca, 'LineWidth', 2);
-	delete(handle);
+	handle1 = findall (gca, 'LineWidth', 2);
+	delete(handle1);
+	if tc ~= 1
+		delete(h0);
+	end
 
 	% plot projections
 	plot3([m1x_plot(1); m3x_plot(1)], [m1x_plot(2); m3x_plot(2)], [-axlim     ; -axlim     ], '-k', 'LineWidth', 2);
@@ -193,10 +209,17 @@ for tc = 1:N_time
 	plot3([m2x_plot(1); m4x_plot(1)], [m2x_plot(2); m4x_plot(2)], [m2x_plot(3); m4x_plot(3)], '-b', 'LineWidth', 2);
 
 	% plot motor forces 
-	plot3([m1x_plot(1); f1x_plot(1)], [m1x_plot(2); f1x_plot(2)], [m1x_plot(3); f1x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m2x_plot(1); f2x_plot(1)], [m2x_plot(2); f2x_plot(2)], [m2x_plot(3); f2x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m3x_plot(1); f3x_plot(1)], [m3x_plot(2); f3x_plot(2)], [m3x_plot(3); f3x_plot(3)], '-g', 'LineWidth', 2);
-	plot3([m4x_plot(1); f4x_plot(1)], [m4x_plot(2); f4x_plot(2)], [m4x_plot(3); f4x_plot(3)], '-g', 'LineWidth', 2);
+	plot3([m1x_plot(1); f1x_plot(1)], [m1x_plot(2); f1x_plot(2)], [m1x_plot(3); f1x_plot(3)], '-r', 'LineWidth', 2);
+	plot3([m2x_plot(1); f2x_plot(1)], [m2x_plot(2); f2x_plot(2)], [m2x_plot(3); f2x_plot(3)], '-r', 'LineWidth', 2);
+	plot3([m3x_plot(1); f3x_plot(1)], [m3x_plot(2); f3x_plot(2)], [m3x_plot(3); f3x_plot(3)], '-r', 'LineWidth', 2);
+	plot3([m4x_plot(1); f4x_plot(1)], [m4x_plot(2); f4x_plot(2)], [m4x_plot(3); f4x_plot(3)], '-r', 'LineWidth', 2);
+
+	% plot average force point
+	h0 = plot3(	[fa1x_plot(1); fa2x_plot(1); fa3x_plot(1); fa4x_plot(1)], ...
+			[fa1x_plot(2); fa2x_plot(2); fa3x_plot(2); fa4x_plot(2)], ...
+			[fa1x_plot(3); fa2x_plot(3); fa3x_plot(3); fa4x_plot(3)], ...
+			'og', 'MarkerSize', 5);
+
 
 	% plot drone center
 	%plot3(x_plot(1),x_plot(2),x_plot(3),'or','LineWidth',4);
