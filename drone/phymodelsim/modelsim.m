@@ -1,94 +1,10 @@
 clear;
 %% Simulation set up
-% Simulation time, in seconds
-start_time = 0;
-end_t = 10;
-d_t = 0.05;
-f_scale = 0.05; 	% force scale for displaying
-disp_speed = 1;
+sim_params;	% include sim_params.m
+sim_setup;	% include sim_setup.m
 
-% Controller gains, tuned by hand
-Kd = 2;
-Kp = 5;
-
-
-% Initial body state
-x = [0; 0; 0];
-d_x = zeros(3,1);
-theta = zeros(3,1);
-
-% Physical parameters
-m = 1.2;
-L = 0.13;
-g = 10;
-b = 0.05;
-k = 1;
-kd = 1;
-I_xx = 0.2; % Inertia
-I_yy = 0.2;
-I_zz = 0.4;
-
-
-% Simulate disturbulance in angular velocity, deviation in radians/second
-deviation = 20;
-d_theta_init = deg2rad(2*deviation*rand(3,1) - deviation); % apply disturbance at beginning
-state.prev_d_theta = d_theta_init; % assuming previous d_theta has the same value
-
-%% Simulating
-time_seq = start_time:d_t:end_t;
-N_time = numel(time_seq);
-
-% Inertia matrix
-I = [	I_xx	0	0	;
-	0	I_yy	0	;
-	0	0	I_zz	];
-state = struct(				...
-	'theta',	{0},		...
-	'prev_d_theta',	{0}	...
-	);
-params = struct( 	...
-	'd_t', 	{d_t},	...
-	'm', 	{m},    ...
-	'g', 	{g},    ...
-	'k', 	{k},    ...
-	'L', 	{L},    ...
-	'b', 	{b},    ...
-	'I_xx',	{I_xx}, ...
-	'I_yy',	{I_yy}, ...
-	'I_zz',	{I_zz}  ...
-	);
-
-PD_param = struct(	...
-	'Kd',	{Kd},	...
-	'Kp',	{Kp}	...
-	);
-
-% m position in body frame
-m1ang = 0;	% angular position of four ms, in radians
-m2ang = pi/2;
-m3ang = pi;
-m4ang = 3*pi/2;
-m1pos = [L*cos(m1ang); L*sin(m1ang); 0]; % convert to rectangular coordinates
-m2pos = [L*cos(m2ang); L*sin(m2ang); 0];
-m3pos = [L*cos(m3ang); L*sin(m3ang); 0];
-m4pos = [L*cos(m4ang); L*sin(m4ang); 0];
-
-% Matrices to save data
-X_data = zeros(3, N_time);
-M1x_data = zeros(3, N_time);
-M2x_data = zeros(3, N_time);
-M3x_data = zeros(3, N_time);
-M4x_data = zeros(3, N_time);
-F1x_data = zeros(3, N_time);
-F2x_data = zeros(3, N_time);
-F3x_data = zeros(3, N_time);
-F4x_data = zeros(3, N_time);
-Fav_data = zeros(3, N_time);
-
-Theta_data = zeros(3, N_time);
-
-
-for tc = 1:N_time 	% time count
+%% Start simulation
+for tc = 1:time.N 	% time count
 	
 	% Apply initial angular velocity at the begining
 	if tc == 1
@@ -100,25 +16,19 @@ for tc = 1:N_time 	% time count
 
 	% Compute linear and angular acceleration
 	omega = d_theta2omega(d_theta, theta);
-	a = acceleration(r, theta, d_x, m, g, k, kd);
-	d_omega = angular_acceleration(r, omega, I, L, b, k);
-	% Data for next time slot
-	omega = omega + d_t*d_omega;
-	theta = theta + d_t*d_theta;
-	d_x = d_x + d_t*a;
-	x = x + d_t*d_x; 	% drone center coordinates in inertial frame
-	d_theta = omega2d_theta(omega, theta);
-
+	a = acceleration(r, theta, d_x, phyparam.m, phyparam.g, phyparam.k, phyparam.kd);
+	d_omega = angular_acceleration(r, omega, phyparam.I, phyparam.L, phyparam.b, phyparam.k);
+	
 	% Compute and save data
 	R = rotation(theta);
 	m1x = R*m1pos + x;	% m coordinates in inertial frame
 	m2x = R*m2pos + x;
 	m3x = R*m3pos + x;
 	m4x = R*m4pos + x;
-	f1v = R*f_scale*[0; 0; r(1)];	% f vectors in body frame
-	f2v = R*f_scale*[0; 0; r(2)];
-	f3v = R*f_scale*[0; 0; r(3)];
-	f4v = R*f_scale*[0; 0; r(4)];
+	f1v = R*dispparam.f_scale*[0; 0; r(1)];	% f vectors in body frame
+	f2v = R*dispparam.f_scale*[0; 0; r(2)];
+	f3v = R*dispparam.f_scale*[0; 0; r(3)];
+	f4v = R*dispparam.f_scale*[0; 0; r(4)];
 	f1x = f1v + m1x; 	% f coordinates in inertial frame
 	f2x = f2v + m2x;
 	f3x = f3v + m3x;
@@ -142,38 +52,50 @@ for tc = 1:N_time 	% time count
 	Fa2x_data(:,tc) = fa2x;
 	Fa3x_data(:,tc) = fa3x;
 	Fa4x_data(:,tc) = fa4x;
+	R_data(:,tc) = r;
+	A_data(:,tc) = a;
 
 	Theta_data(:,tc) = theta;
+	D_theta_data(:,tc) = d_theta/time.delta;
+	V_data(:,tc) = time.delta*a;
+	
+	% Data for next time slot
+	omega = omega + time.delta*d_omega;
+	theta = theta + time.delta*d_theta;
+	d_x = d_x + time.delta*a;
+	x = x + time.delta*d_x; 	% drone center coordinates in inertial frame
+	d_theta = omega2d_theta(omega, theta);
 end
 
 %% Displaying dynamics
-d_t_plot = d_t/disp_speed;
+d_t_plot = time.delta/dispparam.speed;
 t_int = d_t_plot/100; % time interval to check timer, in seconds
 
 % calculate limit of coordinates
-axlim = max(max(abs(X_data))) + 2*L;
+axlim = max(max(abs(X_data))) + 2*phyparam.L;
 ax_limit = [-axlim axlim -axlim axlim -axlim axlim];
 
 disp('Initial diviation in angular velocity, in degrees/second:');
-disp(['x: ', num2str(rad2deg(d_theta_init(1)))]);
-disp(['y: ', num2str(rad2deg(d_theta_init(2)))]);
-disp(['z: ', num2str(rad2deg(d_theta_init(3)))]);
+disp(['	x: ', num2str(rad2deg(d_theta_init(1)))]);
+disp(['	y: ', num2str(rad2deg(d_theta_init(2)))]);
+disp(['	z: ', num2str(rad2deg(d_theta_init(3)))]);
 disp('');
-disp('Start displaying');
-figure('Position', [400 100 800 800])
-h = zeros(12,1);
+disp('Start displaying...');
+fig1hd = figure(1);
+set(fig1hd, 'Position', [200 100 800 800])
 % plot contrast lines
 plot3([ 0         ;  0         ], [-axlim     ;  axlim     ], [-axlim     ; -axlim     ], '-k', 'LineWidth', 0.5);
 hold on;
-grid on;
-axis(ax_limit);
 plot3([-axlim     ;  axlim     ], [ 0         ;  0         ], [-axlim     ; -axlim     ], '-k', 'LineWidth', 0.5);
 plot3([ 0         ;  0         ], [ axlim     ;  axlim     ], [-axlim     ;  axlim     ], '-k', 'LineWidth', 0.5);
 plot3([-axlim     ;  axlim     ], [ axlim     ;  axlim     ], [ 0         ;  0         ], '-k', 'LineWidth', 0.5);
 plot3([ axlim     ;  axlim     ], [ 0         ;  0         ], [-axlim     ;  axlim     ], '-k', 'LineWidth', 0.5);
 plot3([ axlim     ;  axlim     ], [-axlim     ;  axlim     ], [ 0         ;  0         ], '-k', 'LineWidth', 0.5);
+axis(ax_limit);
+grid on;
+xlabel('X'); ylabel('Y'); zlabel('Z');
 
-for tc = 1:N_time
+for tc = 1:time.N
 	tic;
 
 	x_plot = X_data(:,tc);
@@ -235,15 +157,46 @@ for tc = 1:N_time
     
 end
 hold off;
-xlabel('X'); ylabel('Y'); zlabel('Z');
 
 
 %% Plot dynamics change
 
-figure(2);
-plot(time_seq, rad2deg(Theta_data));
-title('Angle vs time');
-legend('\alpha ~ x', '\beta ~ y', '\gamma ~ z');
-xlabel('time (s)'); ylabel('angle (^{o})');
+fig2hd = figure(2);
+set(fig2hd, 'Position', [1020 100 800 800])
+subplot(3,2,1);
+plot(time.seq, rad2deg(Theta_data));
+title('Angles vs. Time');
+legend('\alpha', '\beta', '\gamma');
+xlabel('time (s)'); ylabel('angles (^{o})');
 
+subplot(3,2,2);
+plot(time.seq, rad2deg(D_theta_data));
+title('Angular Velocities vs. Time');
+legend('v_{\alpha}', 'v_{\beta}', 'v_{\gamma}');
+xlabel('time (s)'); ylabel('angular velocities (^{o}/s)');
 
+subplot(3,2,3);
+plot(time.seq, X_data);
+title('Coordinates vs. Time');
+legend('x', 'y', 'z');
+xlabel('time (s)'); ylabel('Coordinates (m)');
+
+subplot(3,2,4);
+plot(time.seq, V_data);
+title('Velocities vs. Time');
+legend('v_{x}', 'v_{y}', 'v_{z}');
+xlabel('time (s)'); ylabel('velocities (m/s)');
+
+subplot(3,2,5);
+plot(time.seq, R_data);
+title('Controller Outputs (Forces) vs. Time');
+legend('motor #1', 'motor #2', 'motor #3', 'motor #4');
+xlabel('time (s)'); ylabel('Controller Outputs (Forces)');
+
+subplot(3,2,6);
+plot(time.seq, A_data);
+title('Accelerations vs. Time');
+legend('a_{x}', 'a_{y}', 'a_{z}');
+xlabel('time (s)'); ylabel('acceleration (m/s^{2})');
+
+disp('Done!')
