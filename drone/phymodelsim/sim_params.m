@@ -7,10 +7,11 @@ time.end = 10;		% end time
 time.delta = 0.05;	% time step
 
 %% Body state, set initail distrubance here
-x = zeros(3,1);
-d_x = zeros(3,1);
-theta = zeros(3,1);
-d_theta = zeros(3,1);
+state.x       = zeros(3,1);
+state.d_x     = zeros(3,1);
+state.theta   = zeros(3,1);
+state.d_theta = zeros(3,1);
+state.r       = zeros(4,1);
 
 % Initial distrubance
 % Simulate disturbulance in angular velocity
@@ -37,7 +38,7 @@ phyparam.I_yy = 0.2;	% inertia along yy
 phyparam.I_zz = 0.4;	% inertia along zz
 
 %% m position in body frame
-m1ang = 0;	% angular position of four motors, in radians
-m2ang = pi/2;
-m3ang = pi;
-m4ang = 3*pi/2;
+phyparam.m1ang = 0;	% angular position of four motors, in radians
+phyparam.m2ang = pi/2;
+phyparam.m3ang = pi;
+phyparam.m4ang = 3*pi/2;

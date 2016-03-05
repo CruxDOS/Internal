@@ -5,19 +5,6 @@
 phyparam.I = [	phyparam.I_xx	0		0		;
 		0		phyparam.I_yy	0		;
 		0		0		phyparam.I_zz	];
-
-params = struct( 			...
-	'd_t', 	{time.delta},		...
-	'm', 	{phyparam.m},   	...
-	'g', 	{phyparam.g},   	...
-	'k', 	{phyparam.k},   	...
-	'L', 	{phyparam.L},   	...
-	'b', 	{phyparam.b},   	...
-	'I_xx',	{phyparam.I_xx},	...
-	'I_yy',	{phyparam.I_yy},	...
-	'I_zz',	{phyparam.I_zz} 	...
-	);
-
 %% Discrete time sequence
 time.seq = time.start:time.delta:time.end;
 time.N = numel(time.seq);
@@ -25,7 +12,13 @@ time.N = numel(time.seq);
 %% Randomize initial distrubance
 d_theta_init = deg2rad(d_theta_devi.*ones(3,1).*(2*rand(3,1) - 1)); % apply disturbance at beginning
 
-state = struct(			...
+disp('Initial diviation in angular velocity, in degrees/second:');
+disp(['	x: ', num2str(rad2deg(d_theta_init(1)))]);
+disp(['	y: ', num2str(rad2deg(d_theta_init(2)))]);
+disp(['	z: ', num2str(rad2deg(d_theta_init(3)))]);
+disp('');
+
+ctrlstate = struct(		...
 	'theta',	{0},	...
 	'prev_d_theta',	{0}	...
 	);
@@ -36,25 +29,29 @@ PD_param = struct(	...
 	'Kp',	{Kp}	...
 	);
 
-m1pos = [phyparam.L*cos(m1ang); phyparam.L*sin(m1ang); 0]; % convert to rectangular coordinates
-m2pos = [phyparam.L*cos(m2ang); phyparam.L*sin(m2ang); 0];
-m3pos = [phyparam.L*cos(m3ang); phyparam.L*sin(m3ang); 0];
-m4pos = [phyparam.L*cos(m4ang); phyparam.L*sin(m4ang); 0];
+phyparam.m1pos = [phyparam.L*cos(phyparam.m1ang); phyparam.L*sin(phyparam.m1ang); 0]; % convert to rectangular coordinates
+phyparam.m2pos = [phyparam.L*cos(phyparam.m2ang); phyparam.L*sin(phyparam.m2ang); 0];
+phyparam.m3pos = [phyparam.L*cos(phyparam.m3ang); phyparam.L*sin(phyparam.m3ang); 0];
+phyparam.m4pos = [phyparam.L*cos(phyparam.m4ang); phyparam.L*sin(phyparam.m4ang); 0];
 
-% Matrices to save data
-X_data = zeros(3, time.N);
-M1x_data = zeros(3, time.N);
-M2x_data = zeros(3, time.N);
-M3x_data = zeros(3, time.N);
-M4x_data = zeros(3, time.N);
-F1x_data = zeros(3, time.N);
-F2x_data = zeros(3, time.N);
-F3x_data = zeros(3, time.N);
-F4x_data = zeros(3, time.N);
-Fav_data = zeros(3, time.N);
-Theta_data = zeros(3, time.N);
-D_theta_data = zeros(3, time.N);
-V_data = zeros(3, time.N);
-R_data = zeros(4, time.N);
-A_data = zeros(3, time.N);
+% Matrix of structs to save data
+datatype.X       = zeros(3, 1);
+datatype.M1x     = zeros(3, 1);
+datatype.M2x     = zeros(3, 1);
+datatype.M3x     = zeros(3, 1);
+datatype.M4x     = zeros(3, 1);
+datatype.F1x     = zeros(3, 1);
+datatype.F2x     = zeros(3, 1);
+datatype.F3x     = zeros(3, 1);
+datatype.F4x     = zeros(3, 1);
+datatype.Fa1x    = zeros(3, 1);
+datatype.Fa2x    = zeros(3, 1);
+datatype.Fa3x    = zeros(3, 1);
+datatype.Fa4x    = zeros(3, 1);
+datatype.Rotate  = zeros(4, 1);
+datatype.A       = zeros(3, 1);
+datatype.Theta   = zeros(3, 1);
+datatype.D_theta = zeros(3, 1);
+datatype.V       = zeros(3, 1);
 
+DATA = repmat (datatype, 1, time.N);

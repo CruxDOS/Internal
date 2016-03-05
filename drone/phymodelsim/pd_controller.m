@@ -1,17 +1,17 @@
 % Compute controller output and updated state.
-function [r, state] = pd_controller(state, params, d_theta, PD_param)
+function [r, state] = pd_controller(state, phyparam, time, d_theta, PD_param)
 	
 	theta = state.theta;
 	prev_d_theta = state.prev_d_theta;
-	d_t = params.d_t;
-	m = params.m;
-	g = params.g;
-	k = params.k;
-	L = params.L;
-	b = params.b;
-	I_xx = params.I_xx;
-	I_yy = params.I_yy;
-	I_zz = params.I_zz;
+	d_t = time.delta;
+	m = phyparam.m;
+	g = phyparam.g;
+	k = phyparam.k;
+	L = phyparam.L;
+	b = phyparam.b;
+	I_xx = phyparam.I_xx;
+	I_yy = phyparam.I_yy;
+	I_zz = phyparam.I_zz;
 
 	Kd = PD_param.Kd;
 	Kp = PD_param.Kp;
@@ -36,7 +36,8 @@ function [r, state] = pd_controller(state, params, d_theta, PD_param)
 	for i = 1:4
 		if r_int(i) < 0
 			r_int(i) = 0;
-		else if r_int(i) > 2*m*g/4
+		else
+		if r_int(i) > 2*m*g/4
 			r_int(i) = 2*m*g/4;
 		end
 	end
