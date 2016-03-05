@@ -1,22 +1,24 @@
-% Compute controller output and updated state.
-function [r, state] = controller(state, phyparam, time, d_theta, ctrlparam)
+% Compute controller output and updated ctrlstate.
+function [r, ctrlstate] = controller(ctrlstate, phyparam, time, d_theta, ctrlparam)
 	
-	theta = state.theta;
-	prev_d_theta = state.prev_d_theta;
-	d_t = time.delta;
-	m = phyparam.m;
-	g = phyparam.g;
-	k = phyparam.k;
-	L = phyparam.L;
-	b = phyparam.b;
+	theta        = ctrlstate.theta;
+	prev_d_theta = ctrlstate.prev_d_theta;
+	d_t          = time.delta;
+
+	m    = phyparam.m;
+	g    = phyparam.g;
+	k    = phyparam.k;
+	L    = phyparam.L;
+	b    = phyparam.b;
 	I_xx = phyparam.I_xx;
 	I_yy = phyparam.I_yy;
 	I_zz = phyparam.I_zz;
 
-	Kd = ctrlparam.Kd;
-	Kp = ctrlparam.Kp;
+	Kd    = ctrlparam.Kd;
+	Kp    = ctrlparam.Kp;
+	delay = ctrlparam.delay;
 	
-	% Update the state
+	% Update the ctrlstate
 	theta = theta + d_t .* (prev_d_theta + d_theta)/2;
 
 	% Compute total thrust
@@ -43,6 +45,6 @@ function [r, state] = controller(state, phyparam, time, d_theta, ctrlparam)
 	end
 	r = r_int;
 
-	state.prev_d_theta = d_theta;
-	state.theta = theta;
+	ctrlstate.prev_d_theta = d_theta;
+	ctrlstate.theta = theta;
 end
