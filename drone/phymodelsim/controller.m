@@ -1,5 +1,5 @@
 % Compute controller output and updated state.
-function [r, state] = pd_controller(state, phyparam, time, d_theta, PD_param)
+function [r, state] = controller(state, phyparam, time, d_theta, ctrlparam)
 	
 	theta = state.theta;
 	prev_d_theta = state.prev_d_theta;
@@ -13,8 +13,8 @@ function [r, state] = pd_controller(state, phyparam, time, d_theta, PD_param)
 	I_yy = phyparam.I_yy;
 	I_zz = phyparam.I_zz;
 
-	Kd = PD_param.Kd;
-	Kp = PD_param.Kp;
+	Kd = ctrlparam.Kd;
+	Kp = ctrlparam.Kp;
 	
 	% Update the state
 	theta = theta + d_t .* (prev_d_theta + d_theta)/2;

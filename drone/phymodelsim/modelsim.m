@@ -14,7 +14,7 @@ for tc = 1:time.N 	% time count
 	end
 
 	% Controller
-	[rotate, ctrlstate] = pd_controller(ctrlstate, phyparam, time, state.d_theta, PD_param);
+	[rotate, ctrlstate] = controller(ctrlstate, phyparam, time, state.d_theta, ctrlparam);
 
 	% Compute next state
 	[state_next, a] = compute_state(state, rotate, time, phyparam);

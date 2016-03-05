@@ -11,7 +11,6 @@ state.x       = zeros(3,1);
 state.d_x     = zeros(3,1);
 state.theta   = zeros(3,1);
 state.d_theta = zeros(3,1);
-state.r       = zeros(4,1);
 
 % Initial distrubance
 % Simulate disturbulance in angular velocity
@@ -19,8 +18,8 @@ state.r       = zeros(4,1);
 d_theta_devi = 20;	% in degree/second
 
 %% Controller gains, tune by hand
-Kd = 2;
-Kp = 5;
+ctrlparam.Kd = 2;
+ctrlparam.Kp = 5;
 
 %% Display
 dispparam.f_scale = 0.05; 	% force scale for displaying
