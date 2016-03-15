@@ -7,7 +7,14 @@ phyparam.I = [	phyparam.I_xx	0		0		;
 		0		0		phyparam.I_zz	];
 %% Discrete time sequence
 time.seq = time.start:time.delta:time.end;
-time.N = numel(time.seq);
+time.N   = numel(time.seq);
+time.t   = 0;
+time.tc  = 0;
+
+%% Display parameters
+dispparam.time_seq = time.start:dispparam.time_delta:time.end;
+dispparam.time_N   = numel(dispparam.time_seq);
+dispparam.tc       = 0;
 
 %% Randomize initial distrubance
 d_theta_init = deg2rad(d_theta_devi.*ones(3,1).*(2*rand(3,1) - 1)); % apply disturbance at beginning
@@ -49,4 +56,4 @@ datatype.Theta   = zeros(3, 1);
 datatype.D_theta = zeros(3, 1);
 datatype.V       = zeros(3, 1);
 
-DATA = repmat (datatype, 1, time.N);
+DATA = repmat (datatype, 1, dispparam.time_N);

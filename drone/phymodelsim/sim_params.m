@@ -4,7 +4,7 @@
 %% Time
 time.start = 0;		% start time
 time.end   = 10;	% end time
-time.delta = 0.05;	% time step
+time.delta = 5/1000;	% time step
 
 %% Body state, set initail distrubance here
 state.x       = zeros(3,1);
@@ -24,8 +24,9 @@ ctrlparam.delay = 0;
 % Controller 
 
 %% Display
-dispparam.f_scale = 0.05; 	% force scale for displaying
-dispparam.speed   = 1;		% display speed
+dispparam.f_scale    = 0.05;	% force scale for displaying
+dispparam.speed      = 1;	% display speed
+dispparam.time_delta = 0.05;	% display speed
 
 %% Physical constants
 phyparam.m    = 1.2;	% mass

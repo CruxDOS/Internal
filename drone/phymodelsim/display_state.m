@@ -1,8 +1,8 @@
 % Function: Compute data for displaying
 % input: body sate, rotate velocity
-function result = display_state(DATA, time, dispparam, phyparam)
+function result = display_state(DATA, dispparam, phyparam)
 
-	d_t_plot = time.delta/dispparam.speed;
+	d_t_plot = dispparam.time_delta/dispparam.speed;
 	t_int = d_t_plot/100; % time interval to check timer, in seconds
 	
 	% calculate limit of coordinates
@@ -25,7 +25,7 @@ function result = display_state(DATA, time, dispparam, phyparam)
 	xlabel('X'); ylabel('Y'); zlabel('Z');
 	
 	tic;
-	for tc = 1:time.N
+	for tc = 1:dispparam.time_N
 	
 		x_plot    = DATA(tc).X;
 		m1x_plot  = DATA(tc).M1x;
@@ -95,37 +95,37 @@ function result = display_state(DATA, time, dispparam, phyparam)
 	fig2hd = figure(2);
 	set(fig2hd, 'Position', [1020 100 800 800])
 	subplot(3,2,1);
-	plot(time.seq, rad2deg([DATA(:).Theta]));
+	plot(dispparam.time_seq, rad2deg([DATA(:).Theta]));
 	title('Angles vs. Time');
 	legend('\alpha', '\beta', '\gamma');
 	xlabel('time (s)'); ylabel('angles (^{o})');
 	
 	subplot(3,2,2);
-	plot(time.seq, rad2deg([DATA(:).D_theta]));
+	plot(dispparam.time_seq, rad2deg([DATA(:).D_theta]));
 	title('Angular Velocities vs. Time');
 	legend('v_{\alpha}', 'v_{\beta}', 'v_{\gamma}');
 	xlabel('time (s)'); ylabel('angular velocities (^{o}/s)');
 	
 	subplot(3,2,3);
-	plot(time.seq, [DATA(:).X]);
+	plot(dispparam.time_seq, [DATA(:).X]);
 	title('Coordinates vs. Time');
 	legend('x', 'y', 'z');
 	xlabel('time (s)'); ylabel('Coordinates (m)');
 	
 	subplot(3,2,4);
-	plot(time.seq, [DATA(:).V]);
+	plot(dispparam.time_seq, [DATA(:).V]);
 	title('Velocities vs. Time');
 	legend('v_{x}', 'v_{y}', 'v_{z}');
 	xlabel('time (s)'); ylabel('velocities (m/s)');
 	
 	subplot(3,2,5);
-	plot(time.seq, [DATA(:).Rotate]);
+	plot(dispparam.time_seq, [DATA(:).Rotate]);
 	title('Controller Outputs (Forces) vs. Time');
 	legend('motor #1', 'motor #2', 'motor #3', 'motor #4');
 	xlabel('time (s)'); ylabel('Controller Outputs (Forces)');
 	
 	subplot(3,2,6);
-	plot(time.seq, [DATA(:).A]);
+	plot(dispparam.time_seq, [DATA(:).A]);
 	title('Accelerations vs. Time');
 	legend('a_{x}', 'a_{y}', 'a_{z}');
 	xlabel('time (s)'); ylabel('acceleration (m/s^{2})');
