@@ -4,7 +4,7 @@ sim_params;	% include sim_params.m
 sim_setup;	% include sim_setup.m
 
 %% Start simulation
-for t = time.seq 	% time count
+for t = time.seq 	% time sequence
 	
 	time.t = t;
 	time.tc = time.tc + 1; % Increment time count
@@ -17,7 +17,9 @@ for t = time.seq 	% time count
 	end
 
 	% Controller
-	[rotate, ctrlstate] = controller(ctrlstate, phyparam, time, state.d_theta, ctrlparam);
+	if mod(time.t, ctrlparam.time_delta) == 0
+		[rotate, ctrlstate] = controller(ctrlstate, phyparam, time, state.d_theta, ctrlparam);
+	end
 
 	% Compute next state
 	[state_next, a] = compute_state(state, rotate, time, phyparam);

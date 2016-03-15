@@ -4,7 +4,7 @@
 %% Time
 time.start = 0;		% start time
 time.end   = 10;	% end time
-time.delta = 5/1000;	% time step
+time.delta = 0.1/1000;	% time step
 
 %% Body state, set initail distrubance here
 state.x       = zeros(3,1);
@@ -15,18 +15,21 @@ state.d_theta = zeros(3,1);
 % Initial distrubance
 % Simulate disturbulance in angular velocity
 % Format: "[xd, yd, zd]" or "d"
-d_theta_devi = 20;	% in degree/second
+theta_rand        = 0;
+d_theta_devi_rand = 20;				% in degree/second for randomization
+d_theta_devi_init = [8.3746; 10.1875; -8.9590]	% in degree/second for non-randomization
 
 %% Controller gains, tune by hand
 ctrlparam.Kd    = 2;
 ctrlparam.Kp    = 5;
 ctrlparam.delay = 0;
+ctrlparam.time_delta = 12/1000;
 % Controller 
 
 %% Display
 dispparam.f_scale    = 0.05;	% force scale for displaying
 dispparam.speed      = 1;	% display speed
-dispparam.time_delta = 0.05;	% display speed
+dispparam.time_delta = 50/1000;	% display time step
 
 %% Physical constants
 phyparam.m    = 1.2;	% mass

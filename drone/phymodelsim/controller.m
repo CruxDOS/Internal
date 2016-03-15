@@ -3,7 +3,7 @@ function [r, ctrlstate] = controller(ctrlstate, phyparam, time, d_theta, ctrlpar
 	
 	theta        = ctrlstate.theta;
 	prev_d_theta = ctrlstate.prev_d_theta;
-	d_t          = time.delta;
+	d_t          = ctrlparam.time_delta;
 
 	m    = phyparam.m;
 	g    = phyparam.g;

@@ -17,7 +17,11 @@ dispparam.time_N   = numel(dispparam.time_seq);
 dispparam.tc       = 0;
 
 %% Randomize initial distrubance
-d_theta_init = deg2rad(d_theta_devi.*ones(3,1).*(2*rand(3,1) - 1)); % apply disturbance at beginning
+if theta_rand == 1
+	d_theta_init = deg2rad(d_theta_devi_rand.*ones(3,1).*(2*rand(3,1) - 1)); % apply disturbance at beginning
+else
+	d_theta_init = deg2rad(d_theta_devi_init);
+end
 
 disp('Initial diviation in angular velocity, in degrees/second:');
 disp(['	x: ', num2str(rad2deg(d_theta_init(1)))]);
