@@ -18,7 +18,14 @@ for t = time.seq 	% time sequence
 
 	% Controller
 	if mod(time.t, ctrlparam.time_delta) == 0
-		[rotate, ctrlstate] = controller(ctrlstate, phyparam, time, state.d_theta, ctrlparam);
+		ctrlstate = controller(ctrlstate, phyparam, time, state.d_theta, ctrlparam);
+	end
+
+	% Check controller output queue
+	size_out_q = size(ctrlstate.out_q);
+	if size_out_q(2) ~= 0 && ctrlstate.out_q(1,1) <= time.t
+		rotate = ctrlstate.out_q(2:end,1);
+		ctrlstate.out_q = ctrlstate.out_q(:,2:end);
 	end
 
 	% Compute next state

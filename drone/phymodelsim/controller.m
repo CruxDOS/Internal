@@ -1,5 +1,5 @@
 % Compute controller output and updated ctrlstate.
-function [r, ctrlstate] = controller(ctrlstate, phyparam, time, d_theta, ctrlparam)
+function ctrlstate = controller(ctrlstate, phyparam, time, d_theta, ctrlparam)
 	
 	theta        = ctrlstate.theta;
 	prev_d_theta = ctrlstate.prev_d_theta;
@@ -39,12 +39,14 @@ function [r, ctrlstate] = controller(ctrlstate, phyparam, time, d_theta, ctrlpar
 		if r_int(i) < 0
 			r_int(i) = 0;
 		else
-		if r_int(i) > 2*m*g/4
-			r_int(i) = 2*m*g/4;
+			if r_int(i) > 2*m*g/4
+				r_int(i) = 2*m*g/4;
+			end
 		end
 	end
 	r = r_int;
 
+	ctrlstate.out_q = [ctrlstate.out_q, [time.t+ctrlparam.delay; r]];
 	ctrlstate.prev_d_theta = d_theta;
 	ctrlstate.theta = theta;
 end

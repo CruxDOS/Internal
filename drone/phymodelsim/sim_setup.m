@@ -29,12 +29,15 @@ disp(['	y: ', num2str(rad2deg(d_theta_init(2)))]);
 disp(['	z: ', num2str(rad2deg(d_theta_init(3)))]);
 disp('');
 
-ctrlstate = struct(		...
-	'theta',	{0},	...
-	'prev_d_theta',	{0}	...
-	);
-%state.prev_d_theta = d_theta_init; % assuming previous d_theta has the same value
+%% Controller parameters and output queue
+ctrlstate.theta        = 0;
+ctrlstate.prev_d_theta = 0;
+ctrlstate.out_q        = [];
 
+%% Initial thrust
+rotate = ones(4,1) * phyparam.m*phyparam.g/(4*phyparam.k*(cos(state.theta(1))*cos(state.theta(2))));
+
+%% Motor positions
 phyparam.m1pos = [phyparam.L*cos(phyparam.m1ang); phyparam.L*sin(phyparam.m1ang); 0]; % convert to rectangular coordinates
 phyparam.m2pos = [phyparam.L*cos(phyparam.m2ang); phyparam.L*sin(phyparam.m2ang); 0];
 phyparam.m3pos = [phyparam.L*cos(phyparam.m3ang); phyparam.L*sin(phyparam.m3ang); 0];
